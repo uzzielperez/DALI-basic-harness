@@ -20,6 +20,9 @@ DALI-basic-harness/
 │   ├── bin/{check,filter,tail}.py         # gate a read / sanitize a quote / tail a log
 │   ├── config/*.patterns, *.txt           # allowlist + pseudonymization + secret patterns
 │   └── tests/selftest.py                  # 18 checks, synthetic data only
+├── sandbox/                               # OS-level execution boundary (bubblewrap)
+│   ├── bin/sandbox_run.sh                 # run EXECUTE-phase code confined
+│   └── config/deny-paths.txt              # workspace paths hidden from sandboxed code
 └── plugins/membrane-preflight.js          # optional: ask at session start whether to arm it
 ```
 
@@ -73,6 +76,19 @@ Optional, opencode-only: copy `plugins/membrane-preflight.js` into
 `~/.config/opencode/plugins/` to be asked at session start whether to arm the
 membrane (reply "membrane on" to enforce it for the session). Set
 `MEMBRANE_HOME` if the toolkit is not at `~/.config/opencode/membrane`.
+
+## Using the sandbox
+
+The membrane filters what text enters model context; the sandbox confines what
+code the harness executes (bubblewrap user namespaces: workspace read-write,
+raw-data dirs invisible, no network, no host writes):
+
+```bash
+sandbox/bin/sandbox_run.sh --workspace $WS --timeout 600 -- python3 fit.py
+```
+
+Keep `sandbox/config/deny-paths.txt` in sync with the `!` denials in
+`membrane/config/approved-crossings.txt`. See `sandbox/README.md`.
 
 ## How to adapt to your own pipeline
 

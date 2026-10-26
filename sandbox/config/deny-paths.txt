@@ -1,0 +1,14 @@
+# Sandbox deny paths: relative to the workspace root. Each entry is masked
+# with an empty read-only tmpfs inside the sandbox, so EXECUTE-phase code
+# can neither read nor write these locations (the data still exists on the
+# host; the sandbox just cannot see it).
+#
+# Keep in sync with the '!' hard denials in ../membrane/config/approved-crossings.txt:
+# the membrane hides these paths from model context; the sandbox hides them
+# from the code the model runs.
+#
+# One directory or file per line. No globs. Comments start with '#'.
+
+tuple/
+raw/
+.deid/

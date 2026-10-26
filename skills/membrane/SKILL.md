@@ -45,6 +45,11 @@ path if you move it). `$WS` = the analysis workspace you are working in.
    produced. `$WS/.deid/mapping.tsv` is local-only.
 8. **Write inside `$WS` only.** Never edit a reference/readonly copy of the
    workspace to make a check pass.
+9. **Execute through the sandbox.** Run every analysis command the harness
+   executes via `$SB/bin/sandbox_run.sh --workspace $WS -- <cmd>`
+   (`$SB` = the `sandbox/` directory shipped alongside `membrane/`). Raw-data
+   directories listed in `sandbox/config/deny-paths.txt` are invisible to the
+   sandboxed code; keep that list in sync with the `!` denials above.
 
 ## Hard denials (checked first, no exceptions)
 
@@ -82,5 +87,8 @@ Raw event data (`tuple/**`, `*.root`, `*.dst`, `*.ndst`, `*.h5`, `*.parquet`,
 - The membrane is a **discipline boundary for the LLM**, not a sandbox: it does
   not stop a compromised analysis script (which legitimately reads raw data)
   or a malicious binary. Do not present its output as a security guarantee.
+  For the machine-level boundary (what executed code may touch), use the
+  companion `sandbox/` toolkit (`sandbox_run.sh`, bubblewrap); membrane
+  filters text on the way into context, sandbox confines code on the way out.
 - The mapping table is local but unencrypted.
 - Optional session pre-flight (opencode only): `plugins/membrane-preflight.js`.
