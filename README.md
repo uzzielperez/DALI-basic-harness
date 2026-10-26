@@ -92,6 +92,30 @@ Keep `sandbox/config/deny-paths.txt` in sync with the `!` denials in
 
 ## Setup prompt: self-adapt the harness to your project
 
+### Lazy version — "let the AI figure it out"
+
+If you don't want to answer interview questions, paste just this:
+
+```text
+My project: <one or two sentences describing it>.
+
+Adapt this DALI harness to my use case, no interview: inspect my workspace
+(layout, data formats, outputs, logs) and infer everything you can. Propose
+the full adaptation (membrane allowlist + patterns, sandbox deny paths,
+skills/<my-workflow>/SKILL.md, ADAPTATION.md) with every inferred decision
+marked [inferred] and every guess you could not verify marked [assumed].
+Apply it, run membrane/tests/selftest.py plus one gate/filter/sandbox smoke
+test, and end with a short list of the [assumed] items for me to confirm or
+correct. Never guess a raw-data or credential path as safe: when unsure,
+deny it.
+```
+
+You stay in control the same way as before: correct any `[assumed]` item
+later by re-running the prompt with that one fact fixed; the agent edits
+config, never validated outputs.
+
+### Full version — interview
+
 Paste this into your agent (opencode, Cursor, ...) in a session where this
 repo's skills are available, replacing the first line with your project in a
 few words:
