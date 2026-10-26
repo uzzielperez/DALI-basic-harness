@@ -90,6 +90,56 @@ sandbox/bin/sandbox_run.sh --workspace $WS --timeout 600 -- python3 fit.py
 Keep `sandbox/config/deny-paths.txt` in sync with the `!` denials in
 `membrane/config/approved-crossings.txt`. See `sandbox/README.md`.
 
+## Setup prompt: self-adapt the harness to your project
+
+Paste this into your agent (opencode, Cursor, ...) in a session where this
+repo's skills are available, replacing the first line with your project in a
+few words:
+
+```text
+My project: <one or two sentences, e.g. "electron ID calibration on EESTool
+in a containerized analysisbox workspace" or "ML jet tagging on OOD runs,
+results as yaml + plots in out/">.
+
+Adapt this DALI harness to my use case. Do not write anything yet: first
+interview me. Ask one question at a time, max ~7 questions, each with
+plausible default answers, covering:
+
+1. workspace layout: where raw/forbidden data lives, where aggregate
+   outputs, logs and validation tables are written;
+2. what may cross to the model (aggregate outputs only? which formats?)
+   and what must never cross (raw events, credentials, identifiers);
+3. identifying metadata to pseudonymize: path prefixes, run/dataset/stream
+   labels, hostnames, account names specific to my experiment;
+4. token/secret formats my infrastructure issues (beyond the shipped
+   patterns);
+5. the EXECUTE-phase commands the harness must run, and whether they need
+   network or write access outside the workspace (they should not);
+6. what "validated" means for me: the 2-4 concrete checks and the lowest
+   bin count allowed in quoted tables;
+7. one golden example run and one negative control I can provide.
+
+Then produce, editing files in this repo (never inventing paths I did not
+confirm):
+
+- membrane/config/approved-crossings.txt rewritten for my layout, keeping
+  every '!' denial class;
+- membrane/config/pseudonymize.patterns and secrets.patterns extended with
+  my specifics (experiment rules above the generic ones);
+- sandbox/config/deny-paths.txt in sync with the '!' denials;
+- skills/<my-workflow>/SKILL.md from skills/_template/ with my concrete
+  steps, validation gates and failure-recovery table;
+- a short ADAPTATION.md summarizing the decisions and what to re-check
+  when the workspace layout changes.
+
+Finish by running membrane/tests/selftest.py plus one gate/filter/sandbox
+smoke test against my real workspace, and report pass/fail per check.
+```
+
+The agent should iterate: wrong answer in the interview -> edit the config,
+never the validated output (same rule as the gates). Re-run the prompt
+whenever your pipeline evolves; ask for a diff instead of a rewrite.
+
 ## How to adapt to your own pipeline
 
 1. Copy `skills/_template/` to `skills/<your-workflow>/`.
