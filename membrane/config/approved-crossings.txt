@@ -1,0 +1,44 @@
+# Membrane allowlist: paths (relative to workspace root) allowed to cross to
+# the model. fnmatch globs; a pattern also matches everything under it.
+# Lines starting with '!' are hard denials, checked FIRST.
+#
+# The values below are examples for a typical staged analysis chain. Replace
+# the stage/output directories with your own; keep every '!' line.
+
+# --- aggregate results ---
+*/output/*.yaml
+*/output/*.json
+*/output/*.csv
+validation/*
+tables/*
+*.roothist
+
+# --- logs: cross only via membrane_tail.py (last N lines, filtered) ---
+logs/*.log
+logs/**/*.log
+logs/**/*.pass
+
+# --- provenance / human-readable reports ---
+*.md
+
+# --- hard denials (checked first; override everything above) ---
+# raw event data
+!tuple/*
+!*.root
+!*.ndst
+!*.dst
+!*.bk
+!*.h5
+!*.parquet
+# credentials and local state
+!*.p12
+!*.pem
+!*.key
+!*.env
+!.env
+!.deid/*
+!*.x509*
+!*.proxycache*
+# binaries and large artifacts that should never be quoted
+!*.pdf
+!*.tar.gz
