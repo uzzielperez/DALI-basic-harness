@@ -15,7 +15,12 @@ DALI-basic-harness/
 │   ├── _template/SKILL.md                 # copy + rename to write your own workflow skill
 │   ├── cms-higgs-opendata/SKILL.md        # worked example: CMS open-data Higgs replication
 │   ├── ap-starterkit-execution/SKILL.md   # worked example: LHCb Analysis Productions starterkit
-│   └── membrane/SKILL.md                  # semipermeable security boundary: rules to enforce
+│   ├── membrane/SKILL.md                  # semipermeable security boundary: rules to enforce
+│   ├── writing-internal-note/SKILL.md     # doc skills: internal notes (INT/memo/progress)
+│   ├── writing-analysis-note/SKILL.md     # doc skills: Analysis Notes / ASNs
+│   ├── writing-tdr/SKILL.md               # doc skills: TDR / design documents
+│   ├── reviewer-referee/SKILL.md          # agent: formal gate-based referee review + verdict
+│   └── reviewer-commenter/SKILL.md        # agent: quick inline comments, no verdict
 ├── membrane/                              # the toolkit the membrane skill drives (stdlib Python)
 │   ├── bin/{check,filter,tail}.py         # gate a read / sanitize a quote / tail a log
 │   ├── config/*.patterns, *.txt           # allowlist + pseudonymization + secret patterns
@@ -89,6 +94,17 @@ sandbox/bin/sandbox_run.sh --workspace $WS --timeout 600 -- python3 fit.py
 
 Keep `sandbox/config/deny-paths.txt` in sync with the `!` denials in
 `membrane/config/approved-crossings.txt`. See `sandbox/README.md`.
+
+## Writing and reviewing documents
+
+Basic, deliberately thin doc skills you can grow: `writing-internal-note`,
+`writing-analysis-note` (AN/ASN), `writing-tdr`. Each is a skeleton plus
+harness rules (every number from a run dir, status lines honest, membrane
+on unpublished values). Two review agents: `reviewer-commenter` for quick
+inline feedback (questions, no verdict), `reviewer-referee` for formal
+severity-ranked reviews with an approve/revise gate. Typical loop: draft
+with a writing skill -> commenter pass -> fix -> referee pass -> verdict
+gate -> revise or circulate.
 
 ## Setup prompt: self-adapt the harness to your project
 
