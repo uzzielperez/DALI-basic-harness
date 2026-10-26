@@ -164,6 +164,40 @@ The agent should iterate: wrong answer in the interview -> edit the config,
 never the validated output (same rule as the gates). Re-run the prompt
 whenever your pipeline evolves; ask for a diff instead of a rewrite.
 
+## Thinking out loud: how DALI explains itself
+
+Add this to the end of either setup prompt (or paste it once per session):
+
+```text
+Narrate your reasoning. Before each phase (SETUP, PLAN, EXECUTE, VALIDATE,
+CORRECT) print a "Thinking:" block: what you are about to do, why, which
+files/commands you will touch, and what could go wrong. After each phase
+print a "Decided:" block: the outcome, the evidence (gate exit codes,
+selftest counts, file diffs), and what it commits you to. On any gate
+failure, state the gate, its remedy per the skill's failure table, and
+which config you will change - never the validated output.
+```
+
+What that means phase by phase, and what you should see:
+
+| phase | what the agent sets up and explains | you check |
+|---|---|---|
+| SETUP | which skills/configs it loaded, `$WS`/`$MEM`/`$SB` it resolved, allowlist vs workspace layout mismatches it found | the layout it describes is really yours |
+| PLAN | the step list, which steps are gated, which golden/negative control decides pass | you agree what "validated" means before code runs |
+| EXECUTE | each command *before* running it, wrapped in `sandbox_run.sh`, why it is confined that way | no command runs unconfined; deny paths match `!` denials |
+| VALIDATE | each gate run through the membrane: gate exit codes, filtered output only, tokens not literals | no `[REDACTED]`-free raw content in the transcript |
+| CORRECT | failed gate -> named remedy -> config change -> re-run, with the diff shown | outputs were never hand-edited |
+
+Usage after setup, day to day:
+
+1. Start the session, arm the membrane (and sandbox) per the skill rules.
+2. Give the task; the agent plans with gates, you approve the plan.
+3. Let it execute confined; it quotes you only filtered results.
+4. Gates decide "done", not the agent's opinion; on failure you read the
+   Decided block, approve the named remedy, and it retries.
+5. The run directory + ADAPTATION.md are the audit trail: anyone can
+   reproduce and see every decision that was made.
+
 ## How to adapt to your own pipeline
 
 1. Copy `skills/_template/` to `skills/<your-workflow>/`.
