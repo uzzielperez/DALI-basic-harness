@@ -44,7 +44,8 @@ There is nothing to build. Use the skills with any agent that reads
 
 - **opencode**: copy `skills/` into `~/.config/opencode/skill/` (or a project
   `.opencode/skill/`), or reference the files directly in your prompts.
-- **Cursor**: copy into `.cursor/skills/` in your project.
+- **Cursor**: copy into `.cursor/skills/` in your project (repo-local), or
+  `~/.cursor/skills/` to share them across all your analyses.
 - **Anything else**: paste the relevant `SKILL.md` into your system prompt or
   AGENTS.md.
 
@@ -57,6 +58,66 @@ python3 -m venv ~/harness_env
 source ~/harness_env/bin/activate
 pip install rag-ai-scientist
 ```
+
+### Prerequisites on lxplus / CERN (HEP workflows)
+
+The membrane and sandbox toolkits are stdlib-only and need no install, but the
+full harness around them assumes a typical CERN environment:
+
+| Requirement | Notes |
+|---|---|
+| **lxplus** or any machine with CVMFS + AFS | For the LCG stack and EOS data access |
+| **Kerberos ticket** | `kinit` for EOS access |
+| **Python 3.9+** | Membrane scripts are stdlib-only; LCG or conda is fine |
+| **bubblewrap** | For `sandbox/bin/sandbox_run.sh` (available on lxplus) |
+| **Cursor IDE with MCP support** | Only if you wire the harness into Cursor (see below) |
+| **Git tokens** | Overleaf and/or GitLab — optional, per integration |
+
+### Optional: wiring the harness into Cursor + MCP
+
+If you run the harness inside Cursor alongside MCP servers (RAG knowledge
+base, Overleaf, GitLab CERN), register the servers in `~/.cursor/mcp.json`
+(or a workspace `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "my-analysis-rag": {
+      "command": "/path/to/mcp_env/bin/python",
+      "args": ["/path/to/your-analysis/.cursor/mcp_server.py"]
+    },
+    "overleaf": {
+      "command": "node",
+      "args": ["/path/to/your-analysis/.local_packages/overleafMCP-rw/overleaf-mcp-server.js"]
+    },
+    "gitlab-cern": {
+      "url": "https://gitlab.cern.ch/api/v4/mcp",
+      "headers": { "Authorization": "Bearer ${env:GITLAB_TOKEN}" }
+    },
+    "lbap-app": {
+      "url": "https://lbap.app.cern.ch/mcp/"
+    }
+  }
+}
+```
+
+Reload in Cursor: **Ctrl+Shift+P** → "MCP: Reload". Keep the harness rules
+dominant: MCP tools feed the PLAN/VALIDATE phases, EXECUTE still runs
+confined through `sandbox_run.sh`, and anything quoted back to the model
+still passes the membrane filter.
+
+### Credentials
+
+| Secret | Location | Protection |
+|---|---|---|
+| Overleaf Git token | `.local_packages/overleafMCP-rw/projects.json` | Gitignored via `.local_packages/` |
+| GitLab token | `$GITLAB_TOKEN` env var | Never committed |
+| RAG vector DB | `.cursor/rag_db/` | Local only; gitignored |
+
+Credentials live in **env vars** or **gitignored files** — never in version
+control. The membrane's secret patterns (`membrane/config/secrets.patterns`)
+are the last line of defense, not the first: rotate a token if you suspect it
+reached model context.
 
 ## Using the membrane
 
@@ -222,6 +283,27 @@ Usage after setup, day to day:
    - never edit an answer to satisfy a gate; change the input or the config;
    - always keep at least one negative control in your golden set;
    - every run must be reproducible from its run directory alone.
+
+### What you swap out vs. what you keep
+
+| Swap out (your physics) | Keep (the framework) |
+|---|---|
+| `skills/<your-workflow>/` steps and gates | `harness-tutorial` — gated-loop conventions |
+| `membrane/config/approved-crossings.txt` | `membrane/bin/` scripts (stdlib, analysis-agnostic) |
+| `membrane/config/pseudonymize.patterns`, `secrets.patterns` | `membrane/tests/selftest.py` regression checks |
+| `sandbox/config/deny-paths.txt` | `sandbox/bin/sandbox_run.sh` confinement logic |
+| Reference values in your validation gates | `reviewer-referee` / `reviewer-commenter` review loop |
+
+## Security model in one paragraph
+
+Three layers, each with a different failure mode: the **membrane** is a
+discipline boundary deciding what *text* may enter model context (only
+declared aggregate outputs cross; raw data, credentials and the
+pseudonymization table never do); the **sandbox** is an OS-level boundary
+deciding what *code* may touch (workspace read-write, deny paths invisible,
+no network); **MCP servers** run locally against your own repos and tokens —
+assume anything pasted into the chat may reach the model provider, so arm the
+membrane before discussing unpublished numbers and never paste tokens.
 
 ## Provenance
 
