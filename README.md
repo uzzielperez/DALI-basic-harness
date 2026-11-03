@@ -21,6 +21,8 @@ DALI-basic-harness/
 │   ├── writing-tdr/SKILL.md               # doc skills: TDR / design documents
 │   ├── reviewer-referee/SKILL.md          # agent: formal gate-based referee review + verdict
 │   └── reviewer-commenter/SKILL.md        # agent: quick inline comments, no verdict
+├── install/install.sh                     # one-command setup per IDE (see Setup below)
+├── docs/SETUP.md                          # website-ready setup page (dali-agent.web.cern.ch)
 ├── membrane/                              # the toolkit the membrane skill drives (stdlib Python)
 │   ├── bin/{check,filter,tail}.py         # gate a read / sanitize a quote / tail a log
 │   ├── config/*.patterns, *.txt           # allowlist + pseudonymization + secret patterns
@@ -37,36 +39,197 @@ enforced: three stdlib scripts, no dependencies, no install. If you want the
 markdown-only experience, read `skills/membrane/SKILL.md` and treat the scripts
 as a reference implementation.
 
-## Setup
+## Setup — pick your IDE
 
-There is nothing to build. Use the skills with any agent that reads
-`SKILL.md` files:
+One command wires the DALI agent (skills + membrane + sandbox + instructions)
+into your editor. Everything else in this repo stays markdown-only.
 
-- **opencode**: copy `skills/` into `~/.config/opencode/skill/` (or a project
-  `.opencode/skill/`), or reference the files directly in your prompts.
-- **Cursor**: copy into `.cursor/skills/` in your project (repo-local), or
-  `~/.cursor/skills/` to share them across all your analyses.
-- **Anything else**: paste the relevant `SKILL.md` into your system prompt or
-  AGENTS.md.
+| IDE | Skills land in | Instructions file |
+|---|---|---|
+| [opencode](#opencode) | `.opencode/skill/` or `~/.config/opencode/skill/` | `AGENTS.md` |
+| [Claude Code](#claude-code) | `.claude/skills/` or `~/.claude/skills/` | `CLAUDE.md` |
+| [Cursor](#cursor) | `.cursor/skills/` or `~/.cursor/skills/` | `AGENTS.md` |
+| [Codex](#codex) | `.codex/skills/` or `~/.codex/skills/` | `AGENTS.md` |
+| [GitHub Copilot](#github-copilot) | `.github/skills/` | `AGENTS.md` + `.github/copilot-instructions.md` |
+| [VS Code](#vs-code) | `.github/skills/` (native MCP client) | `AGENTS.md` |
+| [Vibe (Mistral)](#vibe-mistral) | `.agents/skills/` | `AGENTS.md` |
 
-### Making the DALI agent callable in opencode, Cursor, and VS Code
+Every target gets the same four things: the skills, the enforcement toolkits
+copied to `<workspace>/.dali/{membrane,sandbox}`, a marker-delimited
+instructions block, and a callable DALI agent (single source `install/dali-agent.md`, adapted per IDE: /agent dali, @dali, /dali prompt, custom mode) (re-running updates it in place, never duplicates;
+`--uninstall` removes exactly what was installed).
 
-The DALI setup prompt (see below) is IDE-agnostic: it uses only files, shell
-commands, and Snakemake, so the same `AGENTS.md` plus `skills/dali/` work
-unchanged in all three editors. Put `AGENTS.md` at your analysis workspace
-root and make the skills visible:
+### opencode
 
-- **opencode**: `AGENTS.md` is auto-loaded; copy `skills/` into
-  `~/.config/opencode/skill/` (or a project `.opencode/skill/`) so `dali` and
-  `membrane` resolve.
-- **Cursor**: `AGENTS.md` is read; put skills in `.cursor/skills/` (repo) or
-  `~/.cursor/skills/` (shared); invoke the agent by name or reference the
-  file in chat.
-- **VS Code** (Copilot): `AGENTS.md` is read; reference `skills/dali/SKILL.md`
-  in your prompt, or point `.github/copilot-instructions.md` at it.
+1. **Install opencode** — see [opencode.ai/docs](https://opencode.ai/docs)
 
-Then drive it with the commands the prompt defines: `setup`, `extract`,
-`run <step>` / `run all`, `status`, `report`.
+   ```bash
+   curl -fsSL https://opencode.ai/install | bash
+   ```
+
+2. **Install the DALI harness** — from your analysis workspace root:
+
+   ```bash
+   git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
+   /tmp/dali-harness/install/install.sh --ide opencode --workspace "$PWD"
+   ```
+
+   Add `--scope user` to install skills and the membrane-preflight plugin
+   globally (`~/.config/opencode/`) instead of per workspace.
+
+3. **Launch and say `setup`**
+
+   ```bash
+   opencode
+   ```
+
+4. **Try a prompt**
+
+   ```txt
+   setup
+   ```
+
+### Claude Code
+
+1. **Install Claude Code** — see the [setup guide](https://docs.anthropic.com/en/docs/claude-code/setup)
+
+   ```bash
+   curl -fsSL https://claude.ai/install.sh | bash
+   ```
+
+2. **Install the DALI harness** — from your analysis workspace root:
+
+   ```bash
+   /tmp/dali-harness/install/install.sh --ide claude-code --workspace "$PWD"
+   ```
+
+3. **Launch and say `setup`**
+
+   ```bash
+   claude
+   ```
+
+4. **Try a prompt**
+
+   ```txt
+   extract the pipeline from the notes in docs/ and show me state/pipeline.yaml
+   ```
+
+### Cursor
+
+1. **Install Cursor** — from [cursor.com](https://cursor.com); MCP support is
+   built in.
+
+2. **Install the DALI harness** — from your analysis workspace root:
+
+   ```bash
+   /tmp/dali-harness/install/install.sh --ide cursor --workspace "$PWD"
+   ```
+
+   Skills go to `.cursor/skills/` (repo) — use `--scope user` for
+   `~/.cursor/skills/` shared across all your analyses.
+
+3. **Open the workspace, launch the agent, say `setup`**
+   Optional MCP servers (RAG, Overleaf, GitLab CERN): merge
+   `.dali/mcp/cursor.json` into `~/.cursor/mcp.json`, then
+   **Ctrl+Shift+P** → "MCP: Reload".
+
+4. **Try a prompt**
+
+   ```txt
+   run all and give me status
+   ```
+
+### Codex
+
+1. **Install Codex** — see the [Codex guide](https://developers.openai.com/codex/)
+
+   ```bash
+   npm i -g @openai/codex
+   ```
+
+2. **Install the DALI harness** — from your analysis workspace root:
+
+   ```bash
+   /tmp/dali-harness/install/install.sh --ide codex --workspace "$PWD"
+   ```
+
+3. **Launch and say `setup`**
+
+   ```bash
+   codex
+   ```
+
+4. **Try a prompt**
+
+   ```txt
+   status
+   ```
+
+### GitHub Copilot
+
+1. **Install the Copilot extension** and enable agent mode in your editor.
+
+2. **Install the DALI harness** — from your analysis workspace root:
+
+   ```bash
+   /tmp/dali-harness/install/install.sh --ide copilot --workspace "$PWD"
+   ```
+
+   Skills go to `.github/skills/`, and `.github/copilot-instructions.md` gets
+   a pointer to `AGENTS.md` + `skills/dali/SKILL.md`.
+
+3. **Open Copilot Chat in agent mode, say `setup`**
+
+4. **Try a prompt**
+
+   ```txt
+   run selection and validate against the paper reference
+   ```
+
+### VS Code
+
+VS Code is covered by the Copilot flow above (same skills dir), plus native
+MCP: merge `.dali/mcp/vscode.json` via the MCP extension / settings.
+
+```bash
+/tmp/dali-harness/install/install.sh --ide vscode --workspace "$PWD"
+```
+
+### Vibe (Mistral)
+
+1. **Install Vibe** — see the [install guide](https://docs.mistral.ai/vibe/code/cli/install-setup)
+
+   ```bash
+   curl -LsSf https://mistral.ai/vibe/install.sh | bash
+   vibe --setup
+   ```
+
+2. **Install the DALI harness** — Vibe discovers project skills from
+   `.agents/skills/`:
+
+   ```bash
+   /tmp/dali-harness/install/install.sh --ide vibe --workspace "$PWD"
+   ```
+
+3. **Add the optional MCP server** — merge `.dali/mcp/vibe.toml` into
+   `~/.vibe/config.toml`, then `/reload` and `/mcp status` inside Vibe.
+
+4. **Launch and say `setup`**
+
+   ```bash
+   vibe
+   ```
+
+### Verify the install (any IDE)
+
+```bash
+python3 .dali/membrane/tests/selftest.py        # 18 checks, synthetic data
+sandbox/bin/sandbox_run.sh --workspace "$PWD" --timeout 60 -- echo confined
+```
+
+Then drive the agent with the commands the setup prompt defines: `setup`,
+`extract`, `run <step>` / `run all`, `status`, `report`.
 
 `harness-tutorial` references the `ras` CLI for its demo commands. That CLI is
 optional — the *ideas* (golden sets, gates, remedies, determinism checks) are
@@ -195,9 +358,8 @@ agent's system prompt). It builds on this repo: the execute → validate →
 correct loop follows `harness-tutorial`, all data access goes through the
 `membrane` skill, and the step definitions live in `skills/dali/SKILL.md`,
 which you create from `skills/_template/` and keep as the single per-step
-source of detail. To make the resulting agent callable in opencode, Cursor,
-and VS Code, see [Making the DALI agent callable](#making-the-dali-agent-callable-in-opencode-cursor-and-vs-code)
-above.
+source of detail. To wire it into your IDE with one command, see
+[Setup — pick your IDE](#setup--pick-your-ide) above.
 
 ```markdown
 # Role
