@@ -35,7 +35,7 @@ updates in place; `--uninstall` removes exactly what was installed.
 ## Get the harness
 
 ```bash
-# git
+# git — clone the DALI-nucleus repo
 git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
 # or tarball, no git needed
 curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz

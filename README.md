@@ -44,10 +44,12 @@ as a reference implementation.
 **Download the harness** (either route; both give you everything below):
 
 ```bash
-# git
-git clone https://gitlab.cern.ch/lasalle/DALI-nucleus DALI-basic-harness
+# git — clone the DALI-nucleus repo
+git clone https://gitlab.cern.ch/lasalle/DALI-nucleus
+cd DALI-nucleus
 # or tarball, no git needed
 curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz
+cd DALI-nucleus-master
 ```
 
 Or pull it from PyPI, which ships the same skills, the DALI agent definition,
