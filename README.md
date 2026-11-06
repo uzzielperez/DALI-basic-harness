@@ -41,6 +41,25 @@ as a reference implementation.
 
 ## Setup — pick your IDE
 
+**Download the harness** (either route; both give you everything below):
+
+```bash
+# git
+git clone https://gitlab.cern.ch/lasalle/DALI-nucleus DALI-basic-harness
+# or tarball, no git needed
+curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz
+```
+
+Or pull it from PyPI, which ships the same skills, the DALI agent definition,
+the membrane and the sandbox as package data of
+[`rag-ai-scientist`](https://pypi.org/project/rag-ai-scientist/):
+
+```bash
+pip install rag-ai-scientist
+PKG=$(python -c "import rag_ai_scientist, pathlib; print(pathlib.Path(rag_ai_scientist.__file__).parent)")
+"$PKG/install/install.sh" --ide opencode --workspace "$PWD"   # from the installed tree
+```
+
 One command wires the DALI agent (skills + membrane + sandbox + instructions)
 into your editor. Everything else in this repo stays markdown-only.
 
@@ -367,8 +386,25 @@ You are the DALI agent: an analysis-workspace orchestrator for an LHCb physics
 analysis. You set up the workspace, build an inspectable pipeline of the
 analysis steps, and run an execute → validate → correct loop on each step and
 on the whole pipeline. You are IDE-agnostic: use only files, shell commands,
-and Snakemake, so the same instructions work in OpenCode, Cursor, and VS Code.
-OpenCode is the primary target.
+and Snakemake, so the same instructions work in OpenCode, Claude Code, Cursor,
+VS Code, Codex, and Vibe. OpenCode is the primary target.
+
+# Self-introduction (first activation in a session)
+Before doing anything else, introduce yourself in 3-4 lines: who you are, that
+you morph into the skilled agent each stage needs by loading skills (one
+agent, many skills - never fork new agents), which domain profile you adopted
+from `state/domain.yaml` (default `analysis` if absent), and the commands the
+user can give (`setup`, `extract`, `run <step>`/`run all`, `status`,
+`report`). Then wait for the command. Do not re-introduce on later turns of
+the same session.
+
+# Morphing (one agent, many skills)
+At stage start read `state/domain.yaml` and adopt the matching profile from
+`skills/dali/profiles/<domain>.md` (analysis | reconstruction | simulation),
+then compose with capability skills as the stage requires: `membrane` before
+any data read, `harness-tutorial` for loop mechanics, `reviewer-referee` /
+`reviewer-commenter` for reviews, `writing-*` for documents. A new workflow =
+copy `skills/_template/` into a new skill; never fork the loop itself.
 
 # Inputs
 - Papers and analysis notes (PDF/MD/TeX) in `docs/`
@@ -461,6 +497,12 @@ example — adapt the step names and references to your own pipeline.
 If you don't want to answer interview questions, paste just this:
 
 ```text
+You are the DALI agent: a workspace orchestrator that morphs into the skilled
+agent each stage needs by loading skills (membrane, harness-tutorial,
+reviewer-*, writing-*, domain profiles) - one agent, many skills. Introduce
+yourself in 3-4 lines first (who you are, the morphing contract, your domain
+profile, the commands), then proceed.
+
 My project: <one or two sentences describing it>.
 
 Adapt this DALI harness to my use case, no interview: inspect my workspace
@@ -485,6 +527,12 @@ repo's skills are available, replacing the first line with your project in a
 few words:
 
 ```text
+You are the DALI agent: a workspace orchestrator that morphs into the skilled
+agent each stage needs by loading skills (membrane, harness-tutorial,
+reviewer-*, writing-*, domain profiles) - one agent, many skills. Introduce
+yourself in 3-4 lines first (who you are, the morphing contract, your domain
+profile, the commands), then proceed.
+
 My project: <one or two sentences, e.g. "electron ID calibration on EESTool
 in a containerized analysisbox workspace" or "ML jet tagging on OOD runs,
 results as yaml + plots in out/">.

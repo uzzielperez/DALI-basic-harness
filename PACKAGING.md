@@ -10,21 +10,35 @@ Target layout inside the wheel:
 ```
 rag_ai_scientist/
 ├── skills/
-│   ├── membrane/SKILL.md          <- skills/membrane/
-│   └── ...                        (existing skills untouched)
-└── membrane/                      <- membrane/
-    ├── README.md
-    ├── bin/{membrane_check,membrane_filter,membrane_tail}.py
-    ├── config/{approved-crossings.txt,pseudonymize.patterns,secrets.patterns}
-    └── tests/selftest.py
+│   ├── dali/SKILL.md                <- skills/dali/  (orchestrator skill)
+│   ├── dali/profiles/*.md           <- analysis | reconstruction | simulation
+│   ├── membrane/SKILL.md            <- skills/membrane/
+│   └── ...                          (existing skills untouched)
+├── membrane/                      <- membrane/
+│   ├── README.md
+│   ├── bin/{membrane_check,membrane_filter,membrane_tail}.py
+│   ├── config/{approved-crossings.txt,pseudonymize.patterns,secrets.patterns}
+│   └── tests/selftest.py
+├── install/                       <- install/ (so `pip install` users can wire
+│   ├── install.sh                   the callable DALI agent into their IDE)
+│   └── dali-agent.md                (single-source agent body, self-intro included)
+└── plugins/membrane-preflight.js
 ```
+
+The wheel must carry the DALI agent body and installer so a `pip install`
+user gets the same callable, self-introducing DALI agent as a git clone:
+copy `install/` next to the package data and expose it (e.g.
+`python -m rag_ai_scientist.dali_install --ide <ide>` as a thin wrapper that
+locates `install/install.sh` inside the installed tree).
 
 ## 1. Copy in
 
 ```bash
 PKG=/path/to/rag-ai-scientist/src/rag_ai_scientist   # adjust to your layout
+cp -r DALI-basic-harness/skills/dali      $PKG/skills/
 cp -r DALI-basic-harness/skills/membrane  $PKG/skills/
 cp -r DALI-basic-harness/membrane         $PKG/membrane
+cp -r DALI-basic-harness/install          $PKG/install
 cp    DALI-basic-harness/plugins/membrane-preflight.js $PKG/plugins/ 2>/dev/null || \
   { mkdir -p $PKG/plugins && cp DALI-basic-harness/plugins/membrane-preflight.js $PKG/plugins/; }
 ```
@@ -40,11 +54,14 @@ The `config/*.patterns` and `config/*.txt` files are **not** picked up by
 [tool.setuptools.package-data]
 rag_ai_scientist = [
   "skills/*/*.md",
+  "skills/dali/profiles/*.md",
   "membrane/*.md",
   "membrane/bin/*.py",
   "membrane/config/*.patterns",
   "membrane/config/*.txt",
   "membrane/tests/*.py",
+  "install/*.sh",
+  "install/*.md",
   "plugins/*.js",
 ]
 ```
@@ -65,6 +82,7 @@ artifacts = [
 ```
 recursive-include src/rag_ai_scientist/skills *.md
 recursive-include src/rag_ai_scientist/membrane *.md *.py *.patterns *.txt
+recursive-include src/rag_ai_scientist/install *.sh *.md
 recursive-include src/rag_ai_scientist/plugins *.js
 ```
 

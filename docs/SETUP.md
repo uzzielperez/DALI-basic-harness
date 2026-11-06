@@ -35,10 +35,23 @@ updates in place; `--uninstall` removes exactly what was installed.
 ## Get the harness
 
 ```bash
+# git
 git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
+# or tarball, no git needed
+curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz
 ```
 
 (Or use your local checkout; substitute its path below.)
+
+Or pull it from PyPI, which ships the same skills, the DALI agent definition,
+the membrane and the sandbox as package data of
+[`rag-ai-scientist`](https://pypi.org/project/rag-ai-scientist/):
+
+```bash
+pip install rag-ai-scientist
+PKG=$(python -c "import rag_ai_scientist, pathlib; print(pathlib.Path(rag_ai_scientist.__file__).parent)")
+"$PKG/install/install.sh" --ide opencode --workspace "$PWD"   # from the installed tree
+```
 
 ## opencode
 
