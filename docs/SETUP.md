@@ -34,14 +34,32 @@ updates in place; `--uninstall` removes exactly what was installed.
 
 ## Get the harness
 
+You do **not** need git, or a CERN account, to get the harness. Pick any route:
+
+**1. Download a ZIP (no git, no account)** — grab the
+[latest ZIP](https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip),
+unzip it, and `cd` into the `DALI-basic-harness-main/` folder:
+
 ```bash
-# git — clone the DALI-nucleus repo
-git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
-# or tarball, no git needed
-curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz
+curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
+unzip dali-harness.zip && cd DALI-basic-harness-main
 ```
 
-(Or use your local checkout; substitute its path below.)
+**2. Clone from the public GitHub mirror**
+
+```bash
+git clone https://github.com/uzzielperez/DALI-basic-harness.git /tmp/dali-harness
+```
+
+**3. CERN members with access** — the source of truth lives on GitLab
+(`gitlab.cern.ch/lasalle/DALI-nucleus`, CERN SSO required):
+
+```bash
+git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
+```
+
+(Or use your local checkout; substitute its path below. In every route the
+installer is `install/install.sh`.)
 
 Or pull it from PyPI, which ships the same skills, the DALI agent definition,
 the membrane and the sandbox as package data of
@@ -52,6 +70,26 @@ pip install rag-ai-scientist
 PKG=$(python -c "import rag_ai_scientist, pathlib; print(pathlib.Path(rag_ai_scientist.__file__).parent)")
 "$PKG/install/install.sh" --ide opencode --workspace "$PWD"   # from the installed tree
 ```
+
+### One-command onboarding for a new project (`dali-onboard`)
+
+Since `rag-ai-scientist >= 0.1.10` the PyPI package also ships the DALI
+onboarding state machine (LangGraph, Python >= 3.10). Give it a paper and a
+codebase (paths or URLs) and it embeds them into a project RAG brain
+(`.dali/brain`), lets you test the brain (human gate), plans the reproduction
+steps with an LLM, then runs an execute → validate → correct loop with a
+human gate per step, ending in a smoke-test gate:
+
+```bash
+pip install rag-ai-scientist
+dali-onboard --workspace ~/my-analysis
+# equivalent: rag-ai-scientist onboard --workspace ~/my-analysis
+```
+
+Deterministic nodes do all the work; the LLM (Groq / OpenAI-compatible) only
+proposes the plan and fixes, and every proposal is executed and validated by
+the harness before being accepted. Sessions checkpoint under
+`.dali/onboard/` and resume across invocations.
 
 ## opencode
 

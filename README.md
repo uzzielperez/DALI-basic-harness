@@ -41,15 +41,19 @@ as a reference implementation.
 
 ## Setup — pick your IDE
 
-**Download the harness** (either route; both give you everything below):
+**Download the harness** (any route; all give you everything below — no git or
+CERN account needed for the first two):
 
 ```bash
-# git — clone the DALI-nucleus repo
+# 1. ZIP, no git / no account
+curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
+unzip dali-harness.zip && cd DALI-basic-harness-main
+# 2. public GitHub mirror
+git clone https://github.com/uzzielperez/DALI-basic-harness.git
+cd DALI-basic-harness
+# 3. CERN members with access — source of truth on GitLab (CERN SSO)
 git clone https://gitlab.cern.ch/lasalle/DALI-nucleus
 cd DALI-nucleus
-# or tarball, no git needed
-curl -fsSL https://gitlab.cern.ch/lasalle/DALI-nucleus/-/archive/master/DALI-nucleus-master.tar.gz | tar xz
-cd DALI-nucleus-master
 ```
 
 Or pull it from PyPI, which ships the same skills, the DALI agent definition,
@@ -61,6 +65,12 @@ pip install rag-ai-scientist
 PKG=$(python -c "import rag_ai_scientist, pathlib; print(pathlib.Path(rag_ai_scientist.__file__).parent)")
 "$PKG/install/install.sh" --ide opencode --workspace "$PWD"   # from the installed tree
 ```
+
+Since `rag-ai-scientist >= 0.1.10` the same package also ships the DALI
+onboarding state machine: `dali-onboard --workspace <dir>` takes a paper and a
+codebase (paths or URLs), builds a project RAG brain you test through a human
+gate, then runs a plan → execute → validate → correct loop with a human gate
+per step. See `docs/SETUP.md` ("One-command onboarding").
 
 One command wires the DALI agent (skills + membrane + sandbox + instructions)
 into your editor. Everything else in this repo stays markdown-only.
@@ -91,8 +101,8 @@ instructions block, and a callable DALI agent (single source `install/dali-agent
 2. **Install the DALI harness** — from your analysis workspace root:
 
    ```bash
-   git clone https://gitlab.cern.ch/lasalle/DALI-nucleus /tmp/dali-harness
-   /tmp/dali-harness/install/install.sh --ide opencode --workspace "$PWD"
+    git clone https://github.com/uzzielperez/DALI-basic-harness.git /tmp/dali-harness
+    /tmp/dali-harness/install/install.sh --ide opencode --workspace "$PWD"
    ```
 
    Add `--scope user` to install skills and the membrane-preflight plugin
