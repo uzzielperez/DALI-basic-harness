@@ -16,9 +16,11 @@ and skill templates you can adapt to any analysis pipeline.
 DALI-basic-harness/
 ├── skills/
 │   ├── harness-tutorial/SKILL.md          # the core: how the gated harness works end to end
-│   ├── _template/SKILL.md                 # copy + rename to write your own workflow skill
+│   ├── _template/SKILL.md                 # copy + rename to write your own subtask skill (see docs/AUTHORING_A_SKILL.md)
 │   ├── cms-higgs-opendata/SKILL.md        # worked example: CMS open-data Higgs replication
 │   ├── ap-starterkit-execution/SKILL.md   # worked example: LHCb Analysis Productions starterkit
+│   ├── pipeline-checker/SKILL.md          # audit a draft vs repo -> missing-results matrix + run map
+│   ├── timekeeper/SKILL.md                # long-horizon planning + 80/20 priority recall
 │   ├── membrane/SKILL.md                  # semipermeable security boundary: rules to enforce
 │   ├── writing-internal-note/SKILL.md     # doc skills: internal notes (INT/memo/progress)
 │   ├── writing-analysis-note/SKILL.md     # doc skills: Analysis Notes / ASNs
@@ -27,6 +29,7 @@ DALI-basic-harness/
 │   └── reviewer-commenter/SKILL.md        # agent: quick inline comments, no verdict
 ├── install/install.sh                     # one-command setup per IDE (see Setup below)
 ├── docs/SETUP.md                          # website-ready setup page (dali-agent.web.cern.ch)
+├── docs/AUTHORING_A_SKILL.md              # how to write a subtask skill that plugs into the dali orchestrator
 ├── membrane/                              # the toolkit the membrane skill drives (stdlib Python)
 │   ├── bin/{check,filter,tail}.py         # gate a read / sanitize a quote / tail a log
 │   ├── config/*.patterns, *.txt           # allowlist + pseudonymization + secret patterns
