@@ -62,8 +62,8 @@ draft, repo outputs, or pinned references; mark anything inferred
 
 For each ❌ cell, emit and (with user OK) run the mapped command. Always go
 through the orchestrator/wrapper if the repo has one, so checkpoints, rollback
-and the corrector loop happen. Discover the real command from the repo (its
-`run-commands` doc, Snakefile targets, or step scripts) — do not assume a
+and the corrector loop (Mode 3) happen. Discover the real command from the repo
+(its `run-commands` doc, Snakefile targets, or step scripts) — do not assume a
 channel's command.
 
 Generic per-bin loop (substitute your step dir, config glob and bin list):
@@ -78,12 +78,74 @@ done
 Execution rules:
 1. Validate on one small sample/bin first (`--dry-run`, then a bin that has
    gold references to check against).
-2. Stop on first gate failure; run the corrector loop (max 3 attempts), then
-   escalate to the human with the gate's `proposed_fix`.
+2. Stop on first gate failure; enter **Mode 3 — audited self-heal** (bounded
+   corrector loop), then escalate to the human with the gate's `proposed_fix`.
 3. Respect blockers (a bin waiting on a fit topology, a decision, an external
    sample) — report them, do not work around them.
 4. After a successful step: re-run the audit for the affected rows and update
    the matrix cells with values + source file path.
+
+## Mode 3 — Audited self-heal (corrector loop, never silent)
+
+When a gate fails, the skill may propose and apply a *bounded* correction and
+re-run — but a heal is an **auditable event, not a quiet retry**. Two absolute
+properties:
+
+- **Every heal is reported** — in chat the same turn it happens, and in a
+  persistent ledger (`state/heal_log.jsonl` + a `docs/HEAL_LOG.md` table). No
+  heal may be collapsed into a generic "fixed" line.
+- **We never cheat to make a gate pass.** A heal may only change the *input or
+  the config* that produced the failure. The immutables below are the
+  anti-cheating boundary; touching one to flip a gate is a violation, not a
+  fix — STOP and escalate.
+
+### Anti-cheating boundary (immutable during a heal)
+
+| Never modify to pass a gate | Why |
+|---|---|
+| Golden / pinned reference values | the benchmark is the point of the gate |
+| Gate definitions, thresholds, or the check `bound` | moving the goalposts |
+| Pipeline outputs directly (hand-edit a result file) | faking the result |
+| The check contract (`type`, `key`, `bound`) | weakening the test |
+| Seeds / binning / selection to dodge a failure, unless the *plan* changed | tuning until it passes |
+
+Allowed heal levers: fix a wrong input path, a config typo, a missing
+dependency, an upstream step that must run first, a genuinely stale derived
+file. If the only way to pass is on the forbidden side of that line, **it is
+not a heal — escalate.**
+
+### One heal = one append-only ledger record (emit before AND after)
+
+```json
+{
+  "ts": "<ISO8601>", "step": "<step>", "bin": "<bin>",
+  "gate": "<gate id>", "rule": "<gate rule>",
+  "failed_value": "<observed>", "bound": "<threshold>",
+  "diagnosis": "<one line>",
+  "lever": "<input|config|dep|ordering|regen>",   // MUST be an allowed lever
+  "changed_files": ["<path>", "..."],
+  "before": "<value/state>", "after": "<value/state>",
+  "attempt": 1, "max_attempts": 3,
+  "result": "<pass|fail|escalate>",
+  "immutables_touched": false                      // must stay false; true => violation, halt
+}
+```
+
+Rules:
+1. **Log before you re-run** (record with `result` pending), then update the
+   same record with the post-run `result` — the ledger shows the *attempt*, not
+   just the happy path.
+2. **Max 3 attempts per gate.** On the 3rd failure, or the instant a lever
+   would cross the boundary, set `result: escalate` and hand the human the
+   gate id, both values, the diagnosis, and the `proposed_fix`.
+3. **Report in chat the moment it happens**, one line per heal, e.g.:
+   `🔧 heal: <step>/<bin> gate=<gate> lever=config <before>→<after> attempt 1/3 → PASS`
+   Failures and escalations get the same visibility, never swallowed.
+4. **Reflect the heal in the matrix**: a healed cell shows the value, the
+   source file, *and* a heal marker linking to its `heal_log` entry — so a
+   reader can tell a clean pass from a corrected one at a glance.
+5. **Never batch or back-fill heals.** If a heal was applied outside this
+   loop, record it as `lever: manual` with a reason, same fields.
 
 ## Outputs checklist (definition of done)
 
@@ -92,4 +154,6 @@ Execution rules:
 - [ ] Gate inventory with current status
 - [ ] Missing-results matrix per bin with golden column
 - [ ] FIXME → command map (Mode 2 table), blockers listed
+- [ ] `state/heal_log.jsonl` + `docs/HEAL_LOG.md` — every heal logged, all
+      `immutables_touched` false, escalations surfaced (empty file OK if no heals)
 - [ ] Chat summary: N aligned / N missing / N gates failing + doc path
