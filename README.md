@@ -1,5 +1,9 @@
 # DALI-basic-harness
 
+> **Beta.** The entire DALI harness — installer, skills, membrane, sandbox, and
+> every instruction it writes into your IDE — is still being tested and may
+> change. Docs: https://dali-agent.web.cern.ch/index.html
+
 Lightweight, markdown-only extraction of the agent-harness skills from
 [`rag-ai-scientist`](https://pypi.org/project/rag-ai-scientist/) — no code, no
 dependencies, nothing to install. Just the conventions: gated

@@ -1,5 +1,9 @@
 # DALI agent — setup for your IDE
 
+> **This whole harness is in beta.** Every instruction in these docs, in
+> `AGENTS.md`, and in the DALI skills is still being tested and may change
+> between releases. Breakages are expected — please report them.
+
 > Website-ready page for dali-agent.web.cern.ch (agent-setup style).
 > Mirrors README.md "Setup — pick your IDE" 1:1; keep both in sync.
 
