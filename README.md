@@ -25,6 +25,7 @@ DALI-basic-harness/
 │   ├── writing-internal-note/SKILL.md     # doc skills: internal notes (INT/memo/progress)
 │   ├── writing-analysis-note/SKILL.md     # doc skills: Analysis Notes / ASNs
 │   ├── writing-tdr/SKILL.md               # doc skills: TDR / design documents
+│   ├── analysis-writeup-builder/SKILL.md  # build/refresh the pipeline write-up from repo + draft (md / Overleaf / both)
 │   ├── reviewer-referee/SKILL.md          # agent: formal gate-based referee review + verdict
 │   └── reviewer-commenter/SKILL.md        # agent: quick inline comments, no verdict
 ├── install/install.sh                     # one-command setup per IDE (see Setup below)
