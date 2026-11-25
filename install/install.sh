@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DALI harness installer — one command per IDE, like Cloudflare's agent-setup pages.
 #
-#   ./install.sh --ide cursor|claude-code|codex|copilot|vscode|vibe|opencode|all [--workspace DIR] [--scope user|project] [--dry-run] [--uninstall]
+#   ./install.sh --ide cursor|claude-code|codex|copilot|vscode|vibe|opencode|all [--workspace DIR] [--scope user|project] [--dry-run] [--uninstall] [--check]
 #
 # What it does for every target (identical content, IDE-specific paths):
 #   - copies skills/            -> the target's skills directory
@@ -12,6 +12,8 @@
 # Idempotent: re-running updates in place; the instructions block is delimited by
 # markers and replaced, never duplicated. --uninstall removes exactly what was
 # installed (skills dir, .dali/, marked block, plugin file for opencode).
+# --check (alias --diff) reports what an update would change — new skills, stale
+# files, instructions-block drift — and writes nothing (exit 1 if anything is stale).
 
 set -euo pipefail
 
@@ -21,6 +23,7 @@ WORKSPACE="$PWD"
 SCOPE="user"
 DRY=0
 UNINSTALL=0
+CHECK=0
 
 BLOCK_BEGIN="<!-- BEGIN DALI HARNESS (managed by install.sh — do not edit inside; edit $REPO/README.md) -->"
 BLOCK_END="<!-- END DALI HARNESS -->"
@@ -41,6 +44,7 @@ while [ $# -gt 0 ]; do
     --scope)     SCOPE="${2:?}"; shift 2 ;;
     --dry-run)   DRY=1; shift ;;
     --uninstall) UNINSTALL=1; shift ;;
+    --check|--diff) CHECK=1; shift ;;
     -h|--help)   usage 0 ;;
     *) warn "unknown flag: $1"; usage 1 ;;
   esac
@@ -236,6 +240,18 @@ EOF
 }
 
 # ---------------------------------------------------------------- per-IDE
+# skills destination per IDE/scope (shared by install_ide and check_ide)
+skills_dest() { # skills_dest <ide> -> echoes dest, or empty if none
+  case "$1" in
+    opencode)     if [ "$SCOPE" = user ]; then echo "$HOME/.config/opencode/skill"; else echo "$WORKSPACE/.opencode/skill"; fi ;;
+    claude-code)  if [ "$SCOPE" = user ]; then echo "$HOME/.claude/skills"; else echo "$WORKSPACE/.claude/skills"; fi ;;
+    cursor)       if [ "$SCOPE" = user ]; then echo "$HOME/.cursor/skills"; else echo "$WORKSPACE/.cursor/skills"; fi ;;
+    codex)        if [ "$SCOPE" = user ]; then echo "$HOME/.codex/skills"; else echo "$WORKSPACE/.codex/skills"; fi ;;
+    copilot|vscode) echo "$WORKSPACE/.github/skills" ;;
+    vibe)         echo "$WORKSPACE/.agents/skills" ;;
+  esac
+}
+
 install_ide() {
   local ide="$1"
   log "installing DALI harness for: $ide"
@@ -344,6 +360,76 @@ uninstall_ide() {
     run "rmdir '$d' 2>/dev/null || true"
   done
 }
+
+# ------------------------------------------------------------------- check
+CHECK_STALE=0
+
+check_block() { # check_block <file> — is the DALI instructions block up to date?
+  local f="$1"
+  [ -f "$f" ] || { echo "    instructions: MISSING ($f)"; CHECK_STALE=1; return; }
+  if ! grep -qF "$BLOCK_BEGIN" "$f"; then
+    echo "    instructions: no DALI block in $f"; CHECK_STALE=1; return
+  fi
+  local tmp cur new
+  tmp="$(mktemp)"; cur="$(mktemp)"; new="$(mktemp)"
+  awk -v b="$BLOCK_BEGIN" -v e="$BLOCK_END" '
+    $0==b {inb=1; print; next}
+    inb {print; if ($0==e) inb=0; next}
+  ' "$f" > "$cur"
+  instructions_block > "$new"
+  if diff -u "$cur" "$new" > "$tmp"; then
+    echo "    instructions: up to date ($(basename "$f"))"
+  else
+    echo "    instructions: STALE ($(basename "$f")):"
+    sed 's/^/      /' "$tmp"
+    CHECK_STALE=1
+  fi
+  rm -f "$tmp" "$cur" "$new"
+}
+
+check_ide() { # check_ide <ide> — report drift vs the repo; write nothing
+  local ide="$1" dest d_out
+  log "checking DALI harness for: $ide"
+  dest="$(skills_dest "$ide")"
+  if [ -n "$dest" ] && [ -d "$dest" ]; then
+    d_out="$(diff -rq "$REPO/skills" "$dest" 2>/dev/null || true)"
+    if [ -n "$d_out" ]; then
+      printf '%s\n' "$d_out" | sed 's/^/    /'
+      CHECK_STALE=1
+    else
+      echo "    skills: up to date ($dest)"
+    fi
+  elif [ -n "$dest" ]; then
+    echo "    skills: NOT INSTALLED ($dest)"; CHECK_STALE=1
+  fi
+  case "$ide:$SCOPE" in
+    opencode:user)       check_block "$HOME/.config/opencode/AGENTS.md" ;;
+    opencode:project)    check_block "$WORKSPACE/AGENTS.md" ;;
+    claude-code:user)    check_block "$HOME/.claude/CLAUDE.md" ;;
+    claude-code:project) check_block "$WORKSPACE/CLAUDE.md" ;;
+    codex:user)          check_block "$HOME/.codex/AGENTS.md" ;;
+    cursor|codex|copilot|vscode|vibe) check_block "$WORKSPACE/AGENTS.md" ;;
+  esac
+  local m_out
+  m_out="$(diff -rq "$REPO/membrane" "$WORKSPACE/.dali/membrane" 2>/dev/null || true)"
+  if [ ! -d "$WORKSPACE/.dali/membrane" ] || [ -n "$m_out" ]; then
+    echo "    membrane (.dali/): stale or missing"; CHECK_STALE=1
+  else
+    echo "    membrane (.dali/): up to date"
+  fi
+}
+
+if [ "$CHECK" = 1 ]; then
+  for i in $IDES; do check_ide "$i"; done
+  echo
+  if [ "$CHECK_STALE" = 1 ]; then
+    log "updates available — apply with:  $0 --ide $IDE --workspace '$WORKSPACE' --scope $SCOPE"
+    exit 1
+  else
+    log "everything up to date."
+    exit 0
+  fi
+fi
 
 install_shared
 for i in $IDES; do

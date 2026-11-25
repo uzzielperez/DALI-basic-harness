@@ -25,7 +25,8 @@ Every target gets the same four things: the skills, the enforcement toolkits
 copied to `<workspace>/.dali/{membrane,sandbox}`, a marker-delimited
 instructions block, and a **callable DALI agent** (single source:
 `install/dali-agent.md`, adapted per IDE dialect). Re-running the installer
-updates in place; `--uninstall` removes exactly what was installed.
+updates in place; `--uninstall` removes exactly what was installed; `--check`
+(alias `--diff`) shows what an update would change without writing anything.
 
 ## Prerequisites (lxplus / CERN)
 
@@ -40,19 +41,22 @@ updates in place; `--uninstall` removes exactly what was installed.
 
 You do **not** need git, or a CERN account, to get the harness. Pick any route:
 
-**1. Download a ZIP (no git, no account)** — grab the
+**1. Clone from the public GitHub mirror (the light option — recommended)** —
+a `git clone` is lighter than the ZIP, and it is the route that makes later
+updates trivial (just `git pull`, see "Updating an existing install"):
+
+```bash
+git clone https://github.com/uzzielperez/DALI-basic-harness.git /tmp/dali-harness
+cd /tmp/dali-harness
+```
+
+**2. Download a ZIP (no git, no account)** — grab the
 [latest ZIP](https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip),
 unzip it, and `cd` into the `DALI-basic-harness-main/` folder:
 
 ```bash
 curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
 unzip dali-harness.zip && cd DALI-basic-harness-main
-```
-
-**2. Clone from the public GitHub mirror**
-
-```bash
-git clone https://github.com/uzzielperez/DALI-basic-harness.git /tmp/dali-harness
 ```
 
 **3. CERN members with access** — the source of truth lives on GitLab
@@ -94,6 +98,58 @@ Deterministic nodes do all the work; the LLM (Groq / OpenAI-compatible) only
 proposes the plan and fixes, and every proposal is executed and validated by
 the harness before being accepted. Sessions checkpoint under
 `.dali/onboard/` and resume across invocations.
+
+## Updating an existing install
+
+The harness is in beta and moves fast — new skills, membrane fixes, and agent
+definition changes land regularly. Updating is a two-step **refresh, then
+apply**: first refresh the harness sources, then re-run the same `install.sh`
+command you used at install time. Re-running the installer updates everything
+in place (skills, instructions block, `.dali/` toolkits) — nothing to
+uninstall first.
+
+**Step 1 — refresh the harness sources**, using the same route you installed
+from:
+
+- **Git clone route** (the light option — this is why the clone is
+  recommended):
+  ```bash
+  cd /tmp/dali-harness && git pull
+  ```
+- **ZIP route:** re-download the
+  [latest ZIP](https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip)
+  and unpack it over the existing checkout (or unpack fresh and use the new
+  path below):
+  ```bash
+  curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
+  unzip -o dali-harness.zip
+  ```
+- **pip route:**
+  ```bash
+  pip install -U rag-ai-scientist
+  ```
+
+**Step 2 — see what the update would change** (optional but recommended):
+from your analysis workspace root, run `--check` (alias `--diff`). It compares
+your installed skills, instructions block, and `.dali/` toolkits against the
+refreshed sources and prints the drift — new skills, changed or missing files
+— without writing anything. Exit code 1 means an update is available:
+
+```bash
+/path/to/harness/install/install.sh --check --ide opencode --workspace "$PWD"
+```
+
+**Step 3 — apply the update** by re-running the exact same `install.sh`
+command you used at install time (drop `--check`):
+
+```bash
+/path/to/harness/install/install.sh --ide opencode --workspace "$PWD"
+```
+
+This pulls in the updated skills set and rewrites the instructions block and
+toolkits in place. Marker-delimited blocks are replaced, not duplicated, so
+re-running is safe. (pip route: re-derive `$PKG` as above and run
+`"$PKG/install/install.sh"` from the updated tree.)
 
 ## opencode
 
@@ -278,6 +334,12 @@ sandbox/bin/sandbox_run.sh --workspace "$PWD" --timeout 60 -- echo confined
   preflight plugin asks about it at session start in opencode.
 - Credentials live in env vars or gitignored files, never in version control.
 - `--dry-run` shows exactly what would change; `--uninstall` reverses it.
+- `--check` (alias `--diff`) compares your installed skills, instructions block,
+  and `.dali/` toolkits against the repo and prints the drift — new skills,
+  changed or missing files — without writing anything. Exit code 1 means an
+  update is available; re-run the same install command to apply it. See
+  [Updating an existing install](#updating-an-existing-install) for the full
+  refresh-then-apply procedure per install route.
 
 ## Troubleshooting
 

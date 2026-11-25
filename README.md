@@ -49,16 +49,17 @@ as a reference implementation.
 
 ## Setup — pick your IDE
 
-**Download the harness** (any route; all give you everything below — no git or
-CERN account needed for the first two):
+**Download the harness** (any route; all give you everything below — only the
+ZIP route needs no git or CERN account):
 
 ```bash
-# 1. ZIP, no git / no account
-curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
-unzip dali-harness.zip && cd DALI-basic-harness-main
-# 2. public GitHub mirror
+# 1. public GitHub mirror — the light option, recommended: a clone is lighter
+#    than the ZIP and later updates are just `git pull`
 git clone https://github.com/uzzielperez/DALI-basic-harness.git
 cd DALI-basic-harness
+# 2. ZIP, no git / no account
+curl -fsSL -o dali-harness.zip https://github.com/uzzielperez/DALI-basic-harness/archive/refs/heads/main.zip
+unzip dali-harness.zip && cd DALI-basic-harness-main
 # 3. CERN members with access — source of truth on GitLab (CERN SSO)
 git clone https://gitlab.cern.ch/lasalle/DALI-nucleus
 cd DALI-nucleus
@@ -96,7 +97,10 @@ into your editor. Everything else in this repo stays markdown-only.
 Every target gets the same four things: the skills, the enforcement toolkits
 copied to `<workspace>/.dali/{membrane,sandbox}`, a marker-delimited
 instructions block, and a callable DALI agent (single source `install/dali-agent.md`, adapted per IDE: /agent dali, @dali, /dali prompt, custom mode) (re-running updates it in place, never duplicates;
-`--uninstall` removes exactly what was installed).
+`--uninstall` removes exactly what was installed). To see what an update would
+change before applying it, run the same command with `--check` (alias `--diff`):
+it diffs your installed skills, instructions block, and `.dali/` toolkits
+against the repo and exits 1 if anything is stale.
 
 ### opencode
 
